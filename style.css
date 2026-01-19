@@ -68,14 +68,14 @@ body {
 .gun {
   position: absolute;
   width: 300px;
-  height: 100px;
+  height: 50px;
   transform-origin: center center;
   transition: transform 0.4s ease, top 0.4s ease, left 0.4s ease;
   z-index: 5;
 }
 
 .gun img#gunImg {
-  width: 100%;
+  width: 80%;
   height: auto;
   display: block;
   pointer-events: none;

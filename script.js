@@ -213,33 +213,6 @@ function chooseTarget(){
   });
 }
 
-/* ================== Items ================== */
-function useMag(){
-  info.textContent = shells[shellIndex]?`🔍 ${shells[shellIndex].toUpperCase()}`:"No shell";
-}
-
-function useCigar(){
-  players[turn]=Math.min(maxHP,players[turn]+1);
-  drawHearts();
-  info.textContent="🚬 +1 Heart";
-}
-
-function useSaw(){
-  sawActive=true;
-  info.textContent="🪚 Double damage this turn";
-  gun.style.transform += " scale(1)"; // prevent shrink
-}
-
-function useSoda(){
-  if(!shells[shellIndex]) newShells();
-  shellIndex++;
-  playSound("soda");
-  info.textContent="🥤 Soda removes a shell";
-  updateShells();
-  if(shellIndex>=shells.length) newShells();
-  // Turn not skipped
-}
-
 /* ================== Reveal ================== */
 function toggleReveal(){
   reveal=!reveal;
@@ -336,3 +309,120 @@ killPlayer = function(index){
   updateClickUI();
 };
 
+/* ---------- VISUAL FEEDBACK (CSS INJECTION) ---------- */
+const patchStyle = document.createElement("style");
+patchStyle.textContent = `
+  .player { cursor: pointer; }
+  .player.shootable {
+    outline: 2px solid #888;
+  }
+  .player.killable {
+    outline: 2px solid darkred;
+    box-shadow: 0 0 10px red;
+  }
+`;
+document.head.appendChild(patchStyle);
+
+function updateItemUI(){
+  const inv = inventories[turn];
+
+  document.getElementById("magBtn").textContent =
+    `🔍 (${inv.mag})`;
+  document.getElementById("cigarBtn").textContent =
+    `🚬 (${inv.cigar})`;
+  document.getElementById("sawBtn").textContent =
+    `🪚 (${inv.saw})`;
+  document.getElementById("sodaBtn").textContent =
+    `🥤 (${inv.soda})`;
+}
+
+function useMag(){
+  const inv = inventories[turn];
+  if(inv.mag <= 0){
+    info.textContent = "❌ No magnifying glass left, USe your gut";
+    return;
+  }
+
+  inv.mag--;
+  info.textContent = shells[shellIndex]
+    ? `🔍 ${shells[shellIndex].toUpperCase()}`
+    : "No shell";
+
+  updateItemUI();
+}
+
+function useCigar(){
+  const inv = inventories[turn];
+  if(inv.cigar <= 0){
+    info.textContent = "❌ No cigars to Smoke";
+    return;
+  }
+
+  inv.cigar--;
+  players[turn] = Math.min(maxHP, players[turn] + 1);
+  drawHearts();
+  info.textContent = "🚬 +1 Heart";
+
+  updateItemUI();
+}
+
+//Check to See GLitches
+function useSaw(){
+  const inv = inventories[turn];
+  if(inv.mag <= 0){
+    info.textContent = "❌ No Saw to cut the Pipe";
+    return;
+  }
+
+  inv.mag--;
+  sawActive=true;
+  info.textContent="🪚 Double damage this turn";
+
+  updateItemUI();
+}
+
+function useSoda(){
+  const inv = inventories[turn];
+  if(inv.soda <= 0){
+    info.textContent = "❌ No Soda to Drink, Drunk Boy";
+    return;
+  }
+
+  inv.soda--;
+  if(!shells[shellIndex]) newShells();
+  shellIndex++;
+  playSound("soda");
+  if (shells[shellIndex] == "live"){info.textContent="🥤 Soda removed a LIVE Shell, Bummer";}
+  else {info.textContent="🥤 Soda removed a BLANK shell";}
+  updateShells();
+  if(shellIndex>=shells.length) newShells();
+
+  updateItemUI();
+}
+
+// /* ================== Items ================== */
+// function useMag(){
+//   info.textContent = shells[shellIndex]?`🔍 ${shells[shellIndex].toUpperCase()}`:"No shell";
+// }
+
+// function useCigar(){
+//   players[turn]=Math.min(maxHP,players[turn]+1);
+//   drawHearts();
+//   info.textContent="🚬 +1 Heart";
+// }
+
+// function useSaw(){
+//   sawActive=true;
+//   info.textContent="🪚 Double damage this turn";
+//   gun.style.transform += " scale(1)"; // prevent shrink
+// }
+
+// function useSoda(){
+//   if(!shells[shellIndex]) newShells();
+//   shellIndex++;
+//   playSound("soda");
+//   info.textContent="🥤 Soda removes a shell";
+//   updateShells();
+//   if(shellIndex>=shells.length) newShells();
+//   // Turn not skipped
+// }
