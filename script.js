@@ -37,6 +37,14 @@ function wait(ms) {
 function startGame(playerCount = 4){
   numPlayers = Math.min(Math.max(playerCount,2),8); // clamp 2-8
   players = Array(numPlayers).fill(maxHP);
+
+inventories = Array.from({ length: numPlayers }, () => ({
+  mag: 1,
+  cigar: 1,
+  saw: 1,
+  soda: 1
+}));
+
   setupPositions(numPlayers);
   
   startMenu.style.display = "none";
@@ -65,14 +73,6 @@ function setupPositions(count){
     const p = document.getElementById("p"+i);
     if(p) p.style.display = i<count?"block":"none";
   }
-  for (let i = 0; i < count; i++) {
-  const p = document.getElementById("p" + i);
-  if (!p) continue;
-
-  p.style.top = positions[i].top + "px";
-  p.style.left = positions[i].left + "px";
-}
-
 }
 
 /* ================== Hearts ================== */
@@ -254,3 +254,85 @@ function checkWin(){
     winScreen.style.display="flex";
   }
 }
+
+let killMode = false;
+function toggleKillMode(){
+  killMode = !killMode;
+  info.textContent = killMode ? "☠ Click a player to kill" : "";
+}
+
+function killPlayer(index){
+  if(players[index] === 0) return;
+  players[index] = 0;
+  drawHearts();
+  info.textContent = `☠ Player ${index+1} killed`;
+  killMode = false;
+  checkWin();
+}
+
+/* ---------- FORCE 8 PLAYERS ON GAME START ---------- */
+const _startGame_original = startGame;
+startGame = function(playerCount = 8){
+  _startGame_original(8); // always start with 8 players
+  positionPlayers();
+  updateClickUI();
+};
+
+/* ---------- APPLY ROUND TABLE POSITIONS ---------- */
+function positionPlayers(){
+  if (!positions || !positions.length) return;
+
+  positions.forEach((pos, i)=>{
+    const p = document.getElementById("p"+i);
+    if(!p) return;
+    p.style.top = pos.top + "px";
+    p.style.left = pos.left + "px";
+    p.style.transform = "translate(-50%, -50%)";
+  });
+}
+
+/* ---------- PLAYER CLICK HANDLING ---------- */
+function updateClickUI(){
+  players.forEach((hp, i)=>{
+    const p = document.getElementById("p"+i);
+    if(!p) return;
+
+    p.onclick = null;
+    p.classList.remove("killable", "shootable");
+
+    /* Kill mode click */
+    if(killMode && hp > 0){
+      p.classList.add("killable");
+      p.onclick = () => killPlayer(i);
+      return;
+    }
+
+    /* Shoot mode click (normal gameplay) */
+    if(!killMode && i !== turn && hp > 0){
+      p.classList.add("shootable");
+      p.onclick = () => shoot(i);
+    }
+  });
+}
+
+/* ---------- HOOK TURN CHANGE ---------- */
+const _nextTurn_original = nextTurn;
+nextTurn = function(){
+  _nextTurn_original();
+  updateClickUI();
+};
+
+/* ---------- HOOK KILL MODE ---------- */
+const _toggleKillMode_original = toggleKillMode;
+toggleKillMode = function(){
+  _toggleKillMode_original();
+  updateClickUI();
+};
+
+/* ---------- HOOK KILL PLAYER ---------- */
+const _killPlayer_original = killPlayer;
+killPlayer = function(index){
+  _killPlayer_original(index);
+  updateClickUI();
+};
+

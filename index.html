@@ -21,6 +21,7 @@
 
 <!-- Reveal button -->
 <button id="revealBtn" onclick="toggleReveal()">👁 Reveal</button>
+<button id="killBtn" onclick="toggleKillMode()">☠ Kill</button>
 
 <!-- Audio -->
 <audio id="liveSound" src="sounds/gunshot.mp3" preload="auto"></audio>
@@ -37,6 +38,10 @@
   <div class="player" id="p1">👤 P2<div class="hearts" id="h1"></div></div>
   <div class="player" id="p2">👤 P3<div class="hearts" id="h2"></div></div>
   <div class="player" id="p3">👤 P4<div class="hearts" id="h3"></div></div>
+  <div class="player" id="p4">👤 P5<div class="hearts" id="h4"></div></div>
+  <div class="player" id="p5">👤 P6<div class="hearts" id="h5"></div></div>
+  <div class="player" id="p6">👤 P7<div class="hearts" id="h6"></div></div>
+  <div class="player" id="p7">👤 P8<div class="hearts" id="h7"></div></div>
 
   <div class="gun" id="gun">
     <img src="items/shotgun.png" id="gunImg">
@@ -49,16 +54,13 @@
 
   <div class="actions">
     <button onclick="shoot(turn)">Shoot Yourself</button>
-    <button onclick="chooseTarget()">Shoot Someone</button>
   </div>
 
-  <div class="targets" id="targets"></div>
-
   <div class="items">
-    <button onclick="useMag()">🔍</button>
-    <button onclick="useCigar()">🚬</button>
-    <button onclick="useSaw()">🪚</button>
-    <button onclick="useSoda()">🥤</button>
+    <button id="magBtn" onclick="useMag()">🔍</button>
+    <button id="cigarBtn" onclick="useCigar()">🚬</button>
+    <button id="sawBtn" onclick="useSaw()">🪚</button>
+    <button id="sodaBtn" onclick="useSoda()">🥤</button>
   </div>
 
   <p id="info"></p>
