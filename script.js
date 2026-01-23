@@ -15,6 +15,8 @@ const liveSound = document.getElementById("liveSound");
 const blankSound = document.getElementById("blankSound");
 const sodaSound = document.getElementById("sodaSound");
 
+let isShooting = false;
+
 let players = [];
 let maxHP = 4;
 let turn = 0;
@@ -166,6 +168,10 @@ async function animateShoot(target, isSelfShot, isLive) {
 }
 
 async function shoot(target){
+  // 🚫 Block shooting if a shot is already in progress
+  if (isShooting) return;
+  isShooting = true;
+
   if(!shells[shellIndex]) newShells();
   const isSelfShot = target === turn;
   const result = shells[shellIndex++];
@@ -175,8 +181,8 @@ async function shoot(target){
   await animateShoot(target,isSelfShot,isLive);
 
   if(isLive){
-    const dmg = sawActive?2:1;
-    players[target] = Math.max(0, players[target]-dmg);
+    const dmg = sawActive ? 2 : 1;
+    players[target] = Math.max(0, players[target] - dmg);
     drawHearts();
     info.textContent = `💥 LIVE! Player ${target+1} hit`;
   } else if(isSelfShot){
@@ -188,11 +194,21 @@ async function shoot(target){
   if(shellIndex >= shells.length) newShells();
 
   // Turn logic
-  if(isSelfShot && result==="blank") return; // keep turn
-  if(!isSelfShot && result==="blank") nextTurn(); // end turn on blank at others
+  if(isSelfShot && result==="blank") {
+    isShooting = false;
+    updateItemUI();
+    return;
+  }
+
+  if(!isSelfShot && result==="blank") nextTurn();
   if(result==="live") nextTurn();
+
   updateItemUI();
+
+  // ✅ Unlock shooting AFTER everything finishes
+  isShooting = false;
 }
+
 
 /* ================== Turn ================== */
 function nextTurn(){
@@ -399,7 +415,7 @@ function useSoda(){
   if(!shells[shellIndex]) newShells();
   shellIndex++;
   playSound("soda");
-  if (shells[shellIndex] == "live"){info.textContent="🥤 Soda removed a LIVE Shell, Bummer";}
+  if (shells[shellIndex] == 'live'){info.textContent="🥤 Soda removed a LIVE Shell, Bummer";}
   else {info.textContent="🥤 Soda removed a BLANK shell";}
   updateShells();
   if(shellIndex>=shells.length) newShells();
