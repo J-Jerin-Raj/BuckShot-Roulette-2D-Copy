@@ -39,10 +39,10 @@ function startGame(playerCount = 4){
   players = Array(numPlayers).fill(maxHP);
 
 inventories = Array.from({ length: numPlayers }, () => ({
-  mag: 1,
-  cigar: 1,
-  saw: 1,
-  soda: 1
+  mag: randomSum()[0],
+  cigar: randomSum()[1],
+  saw: randomSum()[2],
+  soda: randomSum()[3]
 }));
 
   setupPositions(numPlayers);
@@ -54,6 +54,7 @@ inventories = Array.from({ length: numPlayers }, () => ({
   newShells();
   pointGunAtPlayer(turn);
   turnText.textContent = `Player ${turn+1}'s Turn`;
+  updateItemUI();
 }
 
 /* ================== Dynamic Positions ================== */
@@ -190,6 +191,7 @@ async function shoot(target){
   if(isSelfShot && result==="blank") return; // keep turn
   if(!isSelfShot && result==="blank") nextTurn(); // end turn on blank at others
   if(result==="live") nextTurn();
+  updateItemUI();
 }
 
 /* ================== Turn ================== */
@@ -336,6 +338,7 @@ function updateItemUI(){
     `🥤 (${inv.soda})`;
 }
 
+//Items in the Game
 function useMag(){
   const inv = inventories[turn];
   if(inv.mag <= 0){
@@ -369,15 +372,19 @@ function useCigar(){
 //Check to See GLitches
 function useSaw(){
   const inv = inventories[turn];
-  if(inv.mag <= 0){
+  if(inv.saw <= 0){
     info.textContent = "❌ No Saw to cut the Pipe";
     return;
   }
 
-  inv.mag--;
-  sawActive=true;
-  info.textContent="🪚 Double damage this turn";
-
+  if(!sawActive){
+    inv.saw--;
+    sawActive=true;
+    info.textContent="🪚 Double damage this turn";
+  }
+  else{
+    info.textContent="🪚 Saw has Already been Activated";
+  }
   updateItemUI();
 }
 
@@ -426,3 +433,13 @@ function useSoda(){
 //   if(shellIndex>=shells.length) newShells();
 //   // Turn not skipped
 // }
+
+//Giving the Items to The players
+function randomSum(total = 6, parts = 4) {
+  const values = Array(parts).fill(0);
+  for (let i = 0; i < total; i++) {
+    values[Math.floor(Math.random() * parts)]++;
+  }
+  console.log(values);
+  return values;
+}
