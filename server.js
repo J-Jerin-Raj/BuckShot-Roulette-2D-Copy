@@ -85,7 +85,8 @@ io.on("connection", socket => {
       type: "shoot",
       from: shooter.name,
       target: victim.name,
-      shell
+      shell,
+      self: socket.playerIndex === target
     });
 
     setTimeout(() => {
@@ -95,13 +96,19 @@ io.on("connection", socket => {
         shooter.saw = false;
       }
 
-      do {
-        gameState.turn =
-          (gameState.turn + 1) % gameState.players.length;
-      } while (
-        gameState.players[gameState.turn].hp === 0 &&
-        gameState.players.some(p => p.hp > 0)
-      );
+      // 🔥 TURN LOGIC FIX
+      const selfBlank =
+        shell === "blank" && socket.playerIndex === target;
+
+      if (!selfBlank) {
+        do {
+          gameState.turn =
+            (gameState.turn + 1) % gameState.players.length;
+        } while (
+          gameState.players[gameState.turn].hp === 0 &&
+          gameState.players.some(p => p.hp > 0)
+        );
+      }
 
       gameState.isShooting = false;
       io.emit("state", gameState);

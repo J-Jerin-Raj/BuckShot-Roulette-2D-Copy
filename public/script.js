@@ -57,6 +57,7 @@ socket.on("state", state => {
 
   setupPositions();
   drawPlayers();
+  drawItems();
   drawShells();
   updateTurn();
   checkWin();
@@ -76,18 +77,19 @@ socket.on("playerMsg", data => {
   }
 
   if (data.type === "shoot") {
-    info.textContent =
-      `${data.from} aims at ${data.target}…`;
+    info.textContent = `${data.from} aims at ${data.target}…`;
 
     setTimeout(() => {
       if (data.shell === "live") {
         sounds.live.play();
-        flashFire(); // 🔥 ONLY LIVE
+        flashFire();
         recoilGun();
         info.textContent = "💥 LIVE SHELL!";
       } else {
         sounds.blank.play();
-        info.textContent = "😮 BLANK!";
+        info.textContent = data.self
+          ? "😌 BLANK — you keep your turn"
+          : "😮 BLANK!";
       }
     }, 500);
   }
@@ -235,6 +237,27 @@ document.getElementById("sodaBtn").onclick = () => {
   sounds.soda.play();
   socket.emit("useItem", "soda");
 };
+
+//Item Rendering
+function drawItems() {
+  if (playerIndex === null) return;
+
+  const items = gameState.players[playerIndex].items;
+
+  updateItem("mag", items.mag);
+  updateItem("cigar", items.cigar);
+  updateItem("saw", items.saw);
+  updateItem("soda", items.soda);
+}
+
+function updateItem(name, count) {
+  const btn = document.getElementById(name + "Btn");
+  const span = document.getElementById(name + "Count");
+
+  span.textContent = count;
+  btn.disabled = count <= 0;
+  btn.style.opacity = count <= 0 ? 0.4 : 1;
+}
 
 /* ---------- TOGGLES ---------- */
 
