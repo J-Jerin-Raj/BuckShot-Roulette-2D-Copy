@@ -215,7 +215,7 @@ io.on("connection", socket => {
     }
 
     if (item === "saw") {
-      // ❌ Prevent using saw twice
+      // Prevent double-arming
       if (player.saw) {
         socket.emit("playerMsg", {
           type: "item",
@@ -234,12 +234,18 @@ io.on("connection", socket => {
 
 
     if (item === "soda") {
+      const discarded = gameState.shells[gameState.shellIndex];
+
       gameState.shellIndex++;
+
       io.emit("playerMsg", {
         type: "item",
-        msg: "🥤 A shell was discarded"
+        msg: discarded === "live"
+          ? "🥤 A LIVE shell was discarded"
+          : "🥤 A BLANK shell was discarded"
       });
 
+      // If barrel emptied by soda
       if (gameState.shellIndex >= gameState.shells.length) {
         giveRoundItems();
         newShells();

@@ -218,3 +218,8 @@ button:hover { background:#444; }
     transform: scale(1);
   }
 }
+
+button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+}

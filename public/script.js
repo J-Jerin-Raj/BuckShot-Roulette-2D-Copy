@@ -267,8 +267,11 @@ function drawItems() {
 
   updateItem("mag", me.items.mag, myTurn);
   updateItem("cigar", me.items.cigar, myTurn);
-  updateItem("saw", me.items.saw, myTurn);
   updateItem("soda", me.items.soda, myTurn);
+
+  // 🪚 Saw: disabled if already armed
+  const sawEnabled = myTurn && me.items.saw > 0 && !me.saw;
+  updateItem("saw", me.items.saw, sawEnabled);
 }
 
 function updateItem(name, count, enabled) {
