@@ -223,3 +223,68 @@ button:disabled {
   cursor: not-allowed;
   filter: grayscale(1);
 }
+
+/* ===== MOBILE HUD FIX ===== */
+@media screen and (max-width: 480px) {
+
+  .items {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .items button {
+    flex: 1 1 45%;
+    font-size: 18px;
+    padding: 10px;
+  }
+
+  #revealBtn,
+  #killBtn {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+
+  .shells {
+    gap: 6px;
+  }
+
+  .shell {
+    width: 16px;
+    height: 32px;
+  }
+
+  #turnText {
+    font-size: 16px;
+  }
+}
+
+/* ===== MOBILE-ONLY MODE ===== */
+body.mobile {
+  font-size: 18px;
+}
+
+body.mobile .game {
+  flex-direction: column;
+  gap: 12px;
+}
+
+body.mobile .items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+body.mobile .items button {
+  font-size: 20px;
+  padding: 14px;
+}
+
+body.mobile #revealBtn,
+body.mobile #killBtn {
+  font-size: 16px;
+  padding: 10px;
+}
+
+body.mobile .shell {
+  height: 36px;
+}

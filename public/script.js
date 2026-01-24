@@ -40,11 +40,29 @@ const SHELL_REVEAL_TIME = 10000;
 
 /* ---------- JOIN ---------- */
 
-document.getElementById("joinBtn").onclick = () => {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return alert("Enter name");
+const joinBtn = document.getElementById("joinBtn");
+const nameInput = document.getElementById("nameInput");
+
+joinBtn.onclick = () => {
+  const name = nameInput.value.trim();
+  if (!name) {
+    alert("Enter name");
+    return;
+  }
+
+  // 🔒 Prevent double join
+  joinBtn.disabled = true;
+  joinBtn.textContent = "Joining...";
+  nameInput.disabled = true;
+
   socket.emit("join", name);
 };
+
+socket.on("disconnect", () => {
+  joinBtn.disabled = false;
+  joinBtn.textContent = "Join Game";
+  nameInput.disabled = false;
+});
 
 /* ---------- SOCKET ---------- */
 
