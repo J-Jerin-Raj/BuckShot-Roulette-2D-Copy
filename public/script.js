@@ -7,6 +7,14 @@ const sounds = {
   cigar: new Audio("sounds/cigar.mp3")
 };
 
+function isMobile() {
+  return window.innerWidth <= 600;
+}
+
+if (isMobile()) {
+  document.body.classList.add("mobile");
+}
+
 const socket = io();
 
 /* ---------- STATE ---------- */

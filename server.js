@@ -134,61 +134,38 @@ io.on("connection", socket => {
     io.emit("state", gameState);
   });
 
-  socket.on("shoot", target => {
-    if (socket.playerIndex !== gameState.turn || gameState.isShooting) return;
+socket.on("shoot", target => {
+  const player = gameState.players[gameState.turn];
+  const shell = gameState.shells[gameState.shellIndex];
 
-    gameState.isShooting = true;
+  const targetPlayer =
+    target === "self"
+      ? player
+      : gameState.players[(gameState.turn + 1) % gameState.players.length];
 
-    // SAFETY: ensure shells exist
-    if (!gameState.shells.length) {
-      newShells();
-    }
+  // 💥 Apply damage ONLY if live
+  if (shell === "live") {
+    targetPlayer.hp -= player.saw ? 2 : 1;
+  }
 
-    const shell = gameState.shells[gameState.shellIndex++];
-    const shooter = gameState.players[socket.playerIndex];
-    const victim = gameState.players[target];
+  // 🪚 CONSUME SAW AFTER ANY SHOT (blank OR live)
+  if (player.saw) {
+    player.saw = false;
 
     io.emit("playerMsg", {
-      type: "shoot",
-      from: shooter.name,
-      target: victim.name,
-      shell,
-      self: socket.playerIndex === target
+      type: "item",
+      msg: `🪚 ${player.name}'s saw was used`
     });
+  }
 
-    setTimeout(() => {
-      // DAMAGE
-      if (shell === "live") {
-        const dmg = shooter.saw ? 2 : 1;
-        victim.hp = Math.max(0, victim.hp - dmg);
-        shooter.saw = false;
-      }
+  // Advance barrel
+  gameState.shellIndex++;
 
-      // 🔥 TURN LOGIC
-      const selfBlank =
-        shell === "blank" && socket.playerIndex === target;
+  // Advance turn
+  gameState.turn = (gameState.turn + 1) % gameState.players.length;
 
-      if (!selfBlank) {
-        do {
-          gameState.turn =
-            (gameState.turn + 1) % gameState.players.length;
-        } while (
-          gameState.players[gameState.turn].hp === 0 &&
-          gameState.players.some(p => p.hp > 0)
-        );
-      }
-
-      // ✅ HERE IS THE FIX
-      // If barrel is empty AFTER the shot → refill immediately
-      if (gameState.shellIndex >= gameState.shells.length) {
-        giveRoundItems();
-        newShells();
-      }
-
-      gameState.isShooting = false;
-      io.emit("state", gameState);
-    }, 900);
-  });
+  io.emit("state", gameState);
+});
 
   socket.on("useItem", item => {
     const i = socket.playerIndex;
