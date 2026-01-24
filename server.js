@@ -10,6 +10,7 @@ app.use(express.static("public"));
 
 const MAX_PLAYERS = 8;
 const MAX_HP = 4;
+const MAX_ITEMS = 6;
 
 /* ---------- GAME STATE ---------- */
 
@@ -26,11 +27,19 @@ let gameState = {
 function newShells() {
   const live = Math.floor(Math.random() * 5) + 1;
   const blank = 6 - live;
+
   gameState.shells = [
     ...Array(live).fill("live"),
     ...Array(blank).fill("blank")
   ].sort(() => Math.random() - 0.5);
+
   gameState.shellIndex = 0;
+
+  io.emit("playerMsg", {
+    type: "item",
+    // msg: `🚬 ${player.name} gained +1 HP`
+  });
+
 }
 
 function randomItems() {
@@ -46,6 +55,22 @@ function randomItems() {
     soda: values[3]
   };
 }
+
+function giveRoundItems() {
+  gameState.players.forEach(p => {
+    if (p.hp <= 0) return;
+
+    for (let i = 0; i < 2; i++) {
+      const keys = ["mag", "cigar", "saw", "soda"];
+      const k = keys[Math.floor(Math.random() * keys.length)];
+
+      if (p.items[k] < MAX_ITEMS) {
+        p.items[k]++;
+      }
+    }
+  });
+}
+
 
 /* ---------- SOCKET ---------- */
 
@@ -70,12 +95,32 @@ io.on("connection", socket => {
     io.emit("state", gameState);
   });
 
+  socket.on("kill", target => {
+    if (
+      target < 0 ||
+      target >= gameState.players.length
+    ) return;
+
+    gameState.players[target].hp = 0;
+
+    io.emit("playerMsg", {
+      type: "item",
+      msg: `☠ ${gameState.players[target].name} was killed`
+    });
+
+    io.emit("state", gameState);
+  });
+
   socket.on("shoot", target => {
     if (socket.playerIndex !== gameState.turn || gameState.isShooting) return;
 
     gameState.isShooting = true;
 
-    if (!gameState.shells[gameState.shellIndex]) newShells();
+    if (!gameState.shells[gameState.shellIndex]) {
+      giveRoundItems();
+      newShells();
+    }
+
     const shell = gameState.shells[gameState.shellIndex++];
 
     const shooter = gameState.players[socket.playerIndex];
@@ -91,12 +136,11 @@ io.on("connection", socket => {
 
     setTimeout(() => {
       if (shell === "live") {
-        let dmg = shooter.saw ? 2 : 1;
+        const dmg = shooter.saw ? 2 : 1;
         victim.hp = Math.max(0, victim.hp - dmg);
         shooter.saw = false;
       }
 
-      // 🔥 TURN LOGIC FIX
       const selfBlank =
         shell === "blank" && socket.playerIndex === target;
 
@@ -115,44 +159,51 @@ io.on("connection", socket => {
     }, 900);
   });
 
-  socket.on("useItem", type => {
-    const p = gameState.players[socket.playerIndex];
-    if (!p || p.items[type] <= 0) return;
+  socket.on("useItem", item => {
+    const i = socket.playerIndex;
+    if (i !== gameState.turn) return;
 
-    p.items[type]--;
+    const player = gameState.players[i];
+    if (!player.items[item] || player.items[item] <= 0) return;
 
-    if (type === "cigar") {
-      p.hp = Math.min(4, p.hp + 1);
-      io.emit("playerMsg", {
-        type: "item",
-        text: `${p.name} smoked a cigar (+1 HP)`
+    player.items[item]--;
+
+    if (item === "mag") {
+      socket.emit("playerMsg", {
+        type: "reveal",
+        shell: gameState.shells[gameState.shellIndex] || "blank"
       });
     }
 
-    if (type === "soda") {
+
+    if (item === "cigar") {
+      player.hp = Math.min(MAX_HP, player.hp + 1);
+      io.emit("playerMsg", {
+        type: "item",
+        msg: `🚬 ${player.name} gained +1 HP`
+      });
+    }
+
+
+    if (item === "saw") {
+      player.saw = true;
+      io.emit("playerMsg", {
+        type: "item",
+        msg: `🪚 ${player.name} armed the saw`
+      });
+    }
+
+    if (item === "soda") {
       gameState.shellIndex++;
       io.emit("playerMsg", {
         type: "item",
-        text: `${p.name} drank soda… skipped a shell 🥤`
+        msg: "🥤 A shell was discarded"
       });
-      if (gameState.shellIndex >= gameState.shells.length)
+
+      if (gameState.shellIndex >= gameState.shells.length) {
+        giveRoundItems();
         newShells();
-    }
-
-    if (type === "mag") {
-      const next = gameState.shells[gameState.shellIndex];
-      io.to(p.id).emit("playerMsg", {
-        type: "reveal",
-        shell: next
-      });
-    }
-
-    if (type === "saw") {
-      p.saw = true;
-      io.emit("playerMsg", {
-        type: "item",
-        text: `${p.name} loaded a sawed-off… 😈`
-      });
+      }
     }
 
     io.emit("state", gameState);

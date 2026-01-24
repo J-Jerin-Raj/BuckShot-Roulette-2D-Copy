@@ -1,63 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Buckshot LAN Extreme</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<!-- START MENU -->
-<div id="startMenu" class="overlay">
-  <h1>BUCKSHOT</h1>
-  <input id="nameInput" placeholder="Enter your name" />
-  <button id="joinBtn">Join Game</button>
-</div>
+  <!-- START MENU -->
+  <div id="startMenu" class="overlay">
+    <div class="login-card">
+      <h1 class="title">BUCKSHOT</h1>
+      <p class="subtitle">Enter the chamber</p>
 
-<!-- GAME UI -->
-<div class="game" id="gameUI" style="display:none;">
-  <h2 id="turnText"></h2>
+      <input id="nameInput" class="name-input" placeholder="Enter your name" maxlength="12" autocomplete="off" />
 
-  <div class="table">
-    <div class="player" id="p0"><div class="name"></div><div class="hearts" id="h0"></div></div>
-    <div class="player" id="p1"><div class="name"></div><div class="hearts" id="h1"></div></div>
-    <div class="player" id="p2"><div class="name"></div><div class="hearts" id="h2"></div></div>
-    <div class="player" id="p3"><div class="name"></div><div class="hearts" id="h3"></div></div>
-    <div class="player" id="p4"><div class="name"></div><div class="hearts" id="h4"></div></div>
-    <div class="player" id="p5"><div class="name"></div><div class="hearts" id="h5"></div></div>
-    <div class="player" id="p6"><div class="name"></div><div class="hearts" id="h6"></div></div>
-    <div class="player" id="p7"><div class="name"></div><div class="hearts" id="h7"></div></div>
-
-    <!-- GUN -->
-    <div class="gun" id="gun">
-      <img src="items/shotgun.png" id="gunImg">
-      <img src="items/fire.png" id="fireEffect">
+      <button id="joinBtn" class="join-btn">
+        Join Game
+      </button>
     </div>
   </div>
 
-  <div class="shells" id="shells"></div>
 
-  <div class="items">
-  <button id="magBtn">🔍 <span id="magCount">0</span></button>
-  <button id="cigarBtn">🚬 <span id="cigarCount">0</span></button>
-  <button id="sawBtn">🪚 <span id="sawCount">0</span></button>
-  <button id="sodaBtn">🥤 <span id="sodaCount">0</span></button>
-</div>
+  <!-- GAME UI -->
+  <div class="game" id="gameUI" style="display:none;">
+    <h2 id="turnText"></h2>
 
-  <p id="info"></p>
-</div>
+    <div class="table">
+      <div class="player" id="p0">
+        <div class="name"></div>
+        <div class="hearts" id="h0"></div>
+      </div>
+      <div class="player" id="p1">
+        <div class="name"></div>
+        <div class="hearts" id="h1"></div>
+      </div>
+      <div class="player" id="p2">
+        <div class="name"></div>
+        <div class="hearts" id="h2"></div>
+      </div>
+      <div class="player" id="p3">
+        <div class="name"></div>
+        <div class="hearts" id="h3"></div>
+      </div>
+      <div class="player" id="p4">
+        <div class="name"></div>
+        <div class="hearts" id="h4"></div>
+      </div>
+      <div class="player" id="p5">
+        <div class="name"></div>
+        <div class="hearts" id="h5"></div>
+      </div>
+      <div class="player" id="p6">
+        <div class="name"></div>
+        <div class="hearts" id="h6"></div>
+      </div>
+      <div class="player" id="p7">
+        <div class="name"></div>
+        <div class="hearts" id="h7"></div>
+      </div>
 
-<!-- WIN SCREEN -->
-<div id="winScreen" class="overlay" style="display:none;">
-  <h1 id="winnerText"></h1>
-  <button onclick="location.reload()">Restart</button>
-</div>
+      <!-- GUN -->
+      <div class="gun" id="gun">
+        <img src="items/shotgun.png" id="gunImg">
+        <img src="items/fire.png" id="fireEffect">
+      </div>
+    </div>
 
-<!-- TOGGLES -->
-<button id="revealBtn" onclick="toggleReveal()">👁 Reveal</button>
-<button id="killBtn" onclick="toggleKillMode()">☠ Kill</button>
+    <div class="shells" id="shells"></div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+    <div class="items">
+      <button id="magBtn">🔍 <span id="magCount">0</span></button>
+      <button id="cigarBtn">🚬 <span id="cigarCount">0</span></button>
+      <button id="sawBtn">🪚 <span id="sawCount">0</span></button>
+      <button id="sodaBtn">🥤 <span id="sodaCount">0</span></button>
+    </div>
+
+    <p id="info"></p>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div id="winScreen" class="overlay" style="display:none;">
+    <h1 id="winnerText"></h1>
+    <button onclick="location.reload()">Restart</button>
+  </div>
+
+  <!-- TOGGLES -->
+  <!-- <button id="revealBtn" onclick="toggleReveal()">👁 Reveal</button>
+  <button id="killBtn" onclick="toggleKillMode()">☠ Kill</button> -->
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>

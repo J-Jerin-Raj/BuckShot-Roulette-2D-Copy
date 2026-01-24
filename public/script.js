@@ -33,6 +33,9 @@ const fireEffect = document.getElementById("fireEffect");
 
 const CENTER = { x: 225, y: 225 };
 const RADIUS = 180;
+//Items
+const MAX_ITEMS = 6;
+const SHELL_REVEAL_TIME = 4000;
 
 /* ---------- JOIN ---------- */
 
@@ -64,18 +67,33 @@ socket.on("state", state => {
 });
 
 socket.on("playerMsg", data => {
-  if (data.type === "item") {
-    info.textContent = data.text;
-    sounds.item.play();
+
+  /* 🔴 NEW: Shell refill / game start reveal */
+  if (data.type === "shells") {
+    info.textContent = `🔴 ${data.live} LIVE | ⚪ ${data.blank} BLANK`;
+    setTimeout(() => {
+      info.textContent = "";
+    }, 4000);
+    return;
   }
 
+  /* 🎒 Item usage */
+  if (data.type === "item") {
+    info.textContent = data.msg;
+    sounds.item.play();
+    return;
+  }
+
+  /* 🔍 Magnifying glass reveal */
   if (data.type === "reveal") {
     info.textContent =
       data.shell === "live"
         ? "🔍 NEXT SHELL: LIVE"
         : "🔍 NEXT SHELL: BLANK";
+    return;
   }
 
+  /* 🔫 Shooting logic (KEEP THIS) */
   if (data.type === "shoot") {
     info.textContent = `${data.from} aims at ${data.target}…`;
 
@@ -166,10 +184,9 @@ function drawPlayers() {
       if (p.hp <= 0) return;
 
       if (killMode) {
-        socket.emit("kill", i); // optional server hook
+        socket.emit("kill", i); // ✅ client only
         return;
       }
-
       shoot(i);
     };
   });
@@ -229,9 +246,6 @@ document.getElementById("cigarBtn").onclick = () =>
 document.getElementById("sawBtn").onclick = () =>
   socket.emit("useItem", "saw");
 
-document.getElementById("sodaBtn").onclick = () =>
-  socket.emit("useItem", "soda");
-
 //Item Sound
 document.getElementById("sodaBtn").onclick = () => {
   sounds.soda.play();
@@ -242,21 +256,38 @@ document.getElementById("sodaBtn").onclick = () => {
 function drawItems() {
   if (playerIndex === null) return;
 
-  const items = gameState.players[playerIndex].items;
+  const me = gameState.players[playerIndex];
+  const myTurn = playerIndex === gameState.turn;
 
-  updateItem("mag", items.mag);
-  updateItem("cigar", items.cigar);
-  updateItem("saw", items.saw);
-  updateItem("soda", items.soda);
+  updateItem("mag", me.items.mag, myTurn);
+  updateItem("cigar", me.items.cigar, myTurn);
+  updateItem("saw", me.items.saw, myTurn);
+  updateItem("soda", me.items.soda, myTurn);
 }
 
-function updateItem(name, count) {
+function updateItem(name, count, enabled) {
   const btn = document.getElementById(name + "Btn");
   const span = document.getElementById(name + "Count");
 
   span.textContent = count;
-  btn.disabled = count <= 0;
-  btn.style.opacity = count <= 0 ? 0.4 : 1;
+  btn.disabled = !enabled || count <= 0;
+  btn.style.opacity = btn.disabled ? 0.4 : 1;
+}
+
+//Giving Out items at the End of each Round
+function giveRoundItems() {
+  gameState.players.forEach(p => {
+    if (p.hp <= 0) return;
+
+    for (let i = 0; i < 2; i++) {
+      const keys = ["mag", "cigar", "saw", "soda"];
+      const k = keys[Math.floor(Math.random() * keys.length)];
+
+      if (p.items[k] < MAX_ITEMS) {
+        p.items[k]++;
+      }
+    }
+  });
 }
 
 /* ---------- TOGGLES ---------- */
@@ -270,6 +301,8 @@ window.toggleKillMode = function () {
   killMode = !killMode;
   info.textContent = killMode ? "☠ Click a player to kill" : "";
 };
+
+// socket.emit("kill", i);
 
 /* ---------- WIN ---------- */
 
