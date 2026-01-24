@@ -302,8 +302,6 @@ window.toggleKillMode = function () {
   info.textContent = killMode ? "☠ Click a player to kill" : "";
 };
 
-// socket.emit("kill", i);
-
 /* ---------- WIN ---------- */
 
 function checkWin() {
@@ -313,9 +311,3 @@ function checkWin() {
     winScreen.style.display = "flex";
   }
 }
-
-// function flashFire() {
-//   const fire = document.getElementById("fireEffect");
-//   fire.style.opacity = 1;
-//   setTimeout(() => (fire.style.opacity = 0), 120);
-// }

@@ -71,7 +71,6 @@ function giveRoundItems() {
   });
 }
 
-
 /* ---------- SOCKET ---------- */
 
 io.on("connection", socket => {
@@ -122,7 +121,6 @@ io.on("connection", socket => {
     }
 
     const shell = gameState.shells[gameState.shellIndex++];
-
     const shooter = gameState.players[socket.playerIndex];
     const victim = gameState.players[target];
 
@@ -175,7 +173,6 @@ io.on("connection", socket => {
       });
     }
 
-
     if (item === "cigar") {
       player.hp = Math.min(MAX_HP, player.hp + 1);
       io.emit("playerMsg", {
@@ -183,7 +180,6 @@ io.on("connection", socket => {
         msg: `🚬 ${player.name} gained +1 HP`
       });
     }
-
 
     if (item === "saw") {
       player.saw = true;
