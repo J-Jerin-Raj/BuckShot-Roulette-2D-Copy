@@ -70,68 +70,86 @@ io.on("connection", socket => {
     io.emit("state", gameState);
   });
 
-socket.on("shoot", target => {
-  if (socket.playerIndex !== gameState.turn || gameState.isShooting) return;
+  socket.on("shoot", target => {
+    if (socket.playerIndex !== gameState.turn || gameState.isShooting) return;
 
-  gameState.isShooting = true;
+    gameState.isShooting = true;
 
-  if (!gameState.shells[gameState.shellIndex]) newShells();
-  const shell = gameState.shells[gameState.shellIndex++];
+    if (!gameState.shells[gameState.shellIndex]) newShells();
+    const shell = gameState.shells[gameState.shellIndex++];
 
-  io.emit("playerMsg", {
-    type: "shoot",
-    from: gameState.players[socket.playerIndex].name,
-    target: gameState.players[target].name,
-    shell
+    const shooter = gameState.players[socket.playerIndex];
+    const victim = gameState.players[target];
+
+    io.emit("playerMsg", {
+      type: "shoot",
+      from: shooter.name,
+      target: victim.name,
+      shell
+    });
+
+    setTimeout(() => {
+      if (shell === "live") {
+        let dmg = shooter.saw ? 2 : 1;
+        victim.hp = Math.max(0, victim.hp - dmg);
+        shooter.saw = false;
+      }
+
+      do {
+        gameState.turn =
+          (gameState.turn + 1) % gameState.players.length;
+      } while (
+        gameState.players[gameState.turn].hp === 0 &&
+        gameState.players.some(p => p.hp > 0)
+      );
+
+      gameState.isShooting = false;
+      io.emit("state", gameState);
+    }, 900);
   });
 
-  setTimeout(() => {
-    if (shell === "live") {
-      gameState.players[target].hp = Math.max(
-        0,
-        gameState.players[target].hp - 1
-      );
+  socket.on("useItem", type => {
+    const p = gameState.players[socket.playerIndex];
+    if (!p || p.items[type] <= 0) return;
+
+    p.items[type]--;
+
+    if (type === "cigar") {
+      p.hp = Math.min(4, p.hp + 1);
+      io.emit("playerMsg", {
+        type: "item",
+        text: `${p.name} smoked a cigar (+1 HP)`
+      });
     }
 
-    // next alive player
-    do {
-      gameState.turn =
-        (gameState.turn + 1) % gameState.players.length;
-    } while (
-      gameState.players[gameState.turn].hp === 0 &&
-      gameState.players.some(p => p.hp > 0)
-    );
+    if (type === "soda") {
+      gameState.shellIndex++;
+      io.emit("playerMsg", {
+        type: "item",
+        text: `${p.name} drank soda… skipped a shell 🥤`
+      });
+      if (gameState.shellIndex >= gameState.shells.length)
+        newShells();
+    }
 
-    gameState.isShooting = false;
+    if (type === "mag") {
+      const next = gameState.shells[gameState.shellIndex];
+      io.to(p.id).emit("playerMsg", {
+        type: "reveal",
+        shell: next
+      });
+    }
+
+    if (type === "saw") {
+      p.saw = true;
+      io.emit("playerMsg", {
+        type: "item",
+        text: `${p.name} loaded a sawed-off… 😈`
+      });
+    }
+
     io.emit("state", gameState);
-  }, 900); // ⏱ dramatic delay
-});
-
-
-socket.on("useItem", type => {
-  const p = gameState.players[socket.playerIndex];
-  if (!p || p.items[type] <= 0) return;
-
-  p.items[type]--;
-
-  let msg = `${p.name} used ${type}`;
-
-  if (type === "cigar") {
-    p.hp = Math.min(4, p.hp + 1);
-    msg = `${p.name} smoked a cigar (+1 HP)`;
-  }
-
-  if (type === "soda") {
-    gameState.shellIndex++;
-    msg = `${p.name} drank soda… skipped a shell 👀`;
-    if (gameState.shellIndex >= gameState.shells.length)
-      newShells();
-  }
-
-  io.emit("playerMsg", { type: "item", text: msg });
-  io.emit("state", gameState);
-});
-
+  });
 
   socket.on("disconnect", () => {
     const p = gameState.players[socket.playerIndex];

@@ -2,7 +2,8 @@ const sounds = {
   live: new Audio("sounds/gunshot.mp3"),
   blank: new Audio("sounds/click.mp3"),
   soda: new Audio("sounds/soda.mp3"),
-  item: new Audio("sounds/item.mp3")
+  item: new Audio("sounds/item.mp3"),
+  saw: new Audio("sounds/saw.mp3")
 };
 
 const socket = io();
@@ -62,24 +63,27 @@ socket.on("state", state => {
 });
 
 socket.on("playerMsg", data => {
-  if (typeof data === "string") {
-    info.textContent = data;
-    return;
-  }
-
   if (data.type === "item") {
     info.textContent = data.text;
     sounds.item.play();
   }
 
+  if (data.type === "reveal") {
+    info.textContent =
+      data.shell === "live"
+        ? "🔍 NEXT SHELL: LIVE"
+        : "🔍 NEXT SHELL: BLANK";
+  }
+
   if (data.type === "shoot") {
     info.textContent =
-      `${data.from} shoots ${data.target}…`;
+      `${data.from} aims at ${data.target}…`;
 
     setTimeout(() => {
       if (data.shell === "live") {
         sounds.live.play();
-        flashFire();
+        flashFire(); // 🔥 ONLY LIVE
+        recoilGun();
         info.textContent = "💥 LIVE SHELL!";
       } else {
         sounds.blank.play();
@@ -88,7 +92,6 @@ socket.on("playerMsg", data => {
     }, 500);
   }
 });
-
 
 /* ---------- POSITIONS ---------- */
 
@@ -133,8 +136,17 @@ function pointGunAt(index) {
 }
 
 function flashFire() {
-  fireEffect.style.opacity = 1;
-  setTimeout(() => fireEffect.style.opacity = 0, 300);
+  const fire = document.getElementById("fireEffect");
+  fire.style.opacity = 1;
+  setTimeout(() => (fire.style.opacity = 0), 120);
+}
+
+function recoilGun() {
+  const gun = document.getElementById("gun");
+  gun.style.transform += " translateX(-10px)";
+  setTimeout(() => {
+    gun.style.transform = gun.style.transform.replace(" translateX(-10px)", "");
+  }, 120);
 }
 
 /* ---------- RENDER ---------- */
@@ -200,7 +212,7 @@ function shoot(target) {
     return;
   }
 
-  flashFire();
+  // flashFire();
   socket.emit("shoot", target);
 }
 
@@ -217,6 +229,12 @@ document.getElementById("sawBtn").onclick = () =>
 
 document.getElementById("sodaBtn").onclick = () =>
   socket.emit("useItem", "soda");
+
+//Item Sound
+document.getElementById("sodaBtn").onclick = () => {
+  sounds.soda.play();
+  socket.emit("useItem", "soda");
+};
 
 /* ---------- TOGGLES ---------- */
 
@@ -240,13 +258,8 @@ function checkWin() {
   }
 }
 
-function flashFire() {
-  const fire = document.getElementById("fireEffect");
-  fire.style.opacity = 1;
-  setTimeout(() => (fire.style.opacity = 0), 120);
-}
-
-document.getElementById("sodaBtn").onclick = () => {
-  sounds.soda.play();
-  socket.emit("useItem", "soda");
-};
+// function flashFire() {
+//   const fire = document.getElementById("fireEffect");
+//   fire.style.opacity = 1;
+//   setTimeout(() => (fire.style.opacity = 0), 120);
+// }
