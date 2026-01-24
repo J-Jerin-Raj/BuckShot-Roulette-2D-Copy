@@ -126,3 +126,95 @@ button:hover { background:#444; }
   cursor: pointer;
   z-index: 5;
 }
+
+.popup {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 1000;
+  transition: opacity 0.5s;
+}
+
+/* ===== LOGIN SCREEN ===== */
+
+.login-card {
+  background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 320px;
+  text-align: center;
+  box-shadow:
+    0 0 30px rgba(0, 0, 0, 0.9),
+    inset 0 0 20px rgba(255, 255, 255, 0.02);
+  animation: fadeIn 0.6s ease;
+}
+
+.title {
+  font-size: 52px;
+  letter-spacing: 4px;
+  margin: 0;
+}
+
+.subtitle {
+  margin: 6px 0 24px;
+  color: #aaa;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.name-input {
+  padding: 12px 12px;
+  font-size: 18px;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: #eee;
+  outline: none;
+  margin-bottom: 18px;
+}
+
+.name-input:focus {
+  border-color: #888;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.join-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 22px;
+  background: linear-gradient(180deg, #333, #111);
+  border: 1px solid #555;
+  border-radius: 10px;
+  color: #eee;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.join-btn:hover {
+  background: linear-gradient(180deg, #444, #222);
+  transform: translateY(-1px);
+}
+
+.join-btn:active {
+  transform: translateY(1px);
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
