@@ -2,9 +2,18 @@ const sounds = {
   live: new Audio("sounds/gunshot.mp3"),
   blank: new Audio("sounds/click.mp3"),
   soda: new Audio("sounds/soda.mp3"),
-  item: new Audio("sounds/item.mp3"),
-  saw: new Audio("sounds/saw.mp3")
+  saw: new Audio("sounds/saw.mp3"),
+  mag: new Audio("sounds/mag.mp3"),
+  cigar: new Audio("sounds/cigar.mp3")
 };
+
+function isMobile() {
+  return window.innerWidth <= 600;
+}
+
+if (isMobile()) {
+  document.body.classList.add("mobile");
+}
 
 const socket = io();
 
@@ -35,15 +44,33 @@ const CENTER = { x: 225, y: 225 };
 const RADIUS = 180;
 //Items
 const MAX_ITEMS = 6;
-const SHELL_REVEAL_TIME = 4000;
+const SHELL_REVEAL_TIME = 10000;
 
 /* ---------- JOIN ---------- */
 
-document.getElementById("joinBtn").onclick = () => {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return alert("Enter name");
+const joinBtn = document.getElementById("joinBtn");
+const nameInput = document.getElementById("nameInput");
+
+joinBtn.onclick = () => {
+  const name = nameInput.value.trim();
+  if (!name) {
+    alert("Enter name");
+    return;
+  }
+
+  // 🔒 Prevent double join
+  joinBtn.disabled = true;
+  joinBtn.textContent = "Joining...";
+  nameInput.disabled = true;
+
   socket.emit("join", name);
 };
+
+socket.on("disconnect", () => {
+  joinBtn.disabled = false;
+  joinBtn.textContent = "Join Game";
+  nameInput.disabled = false;
+});
 
 /* ---------- SOCKET ---------- */
 
@@ -73,14 +100,13 @@ socket.on("playerMsg", data => {
     info.textContent = `🔴 ${data.live} LIVE | ⚪ ${data.blank} BLANK`;
     setTimeout(() => {
       info.textContent = "";
-    }, 4000);
+    }, SHELL_REVEAL_TIME);
     return;
   }
 
   /* 🎒 Item usage */
   if (data.type === "item") {
     info.textContent = data.msg;
-    sounds.item.play();
     return;
   }
 
@@ -237,19 +263,25 @@ function shoot(target) {
 
 /* ---------- ITEMS ---------- */
 
-document.getElementById("magBtn").onclick = () =>
+document.getElementById("magBtn").onclick = () => {
   socket.emit("useItem", "mag");
+  sounds.mag.play();
+};
 
-document.getElementById("cigarBtn").onclick = () =>
+document.getElementById("cigarBtn").onclick = () => {
   socket.emit("useItem", "cigar");
+  sounds.cigar.play();
+};
 
-document.getElementById("sawBtn").onclick = () =>
+document.getElementById("sawBtn").onclick = () => {
   socket.emit("useItem", "saw");
+  sounds.saw.play();
+};
 
 //Item Sound
 document.getElementById("sodaBtn").onclick = () => {
-  sounds.soda.play();
   socket.emit("useItem", "soda");
+  sounds.soda.play();
 };
 
 //Item Rendering
@@ -261,8 +293,11 @@ function drawItems() {
 
   updateItem("mag", me.items.mag, myTurn);
   updateItem("cigar", me.items.cigar, myTurn);
-  updateItem("saw", me.items.saw, myTurn);
   updateItem("soda", me.items.soda, myTurn);
+
+  // 🪚 Saw: disabled if already armed
+  const sawEnabled = myTurn && me.items.saw > 0 && !me.saw;
+  updateItem("saw", me.items.saw, sawEnabled);
 }
 
 function updateItem(name, count, enabled) {

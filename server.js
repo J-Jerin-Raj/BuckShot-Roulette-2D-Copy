@@ -36,10 +36,10 @@ function newShells() {
   gameState.shellIndex = 0;
 
   io.emit("playerMsg", {
-    type: "item",
-    // msg: `🚬 ${player.name} gained +1 HP`
+    type: "shells",
+    live,
+    blank
   });
-
 }
 
 function randomItems() {
@@ -60,13 +60,25 @@ function giveRoundItems() {
   gameState.players.forEach(p => {
     if (p.hp <= 0) return;
 
-    for (let i = 0; i < 2; i++) {
-      const keys = ["mag", "cigar", "saw", "soda"];
-      const k = keys[Math.floor(Math.random() * keys.length)];
+    const keys = ["mag", "cigar", "saw", "soda"];
 
-      if (p.items[k] < MAX_ITEMS) {
-        p.items[k]++;
-      }
+    // Count TOTAL items
+    const totalItems =
+      p.items.mag +
+      p.items.cigar +
+      p.items.saw +
+      p.items.soda;
+
+    // How many items this player can still receive
+    const spaceLeft = MAX_ITEMS - totalItems;
+    if (spaceLeft <= 0) return;
+
+    // Give up to 2 items, but never exceed max total
+    const toGive = Math.min(2, spaceLeft);
+
+    for (let i = 0; i < toGive; i++) {
+      const k = keys[Math.floor(Math.random() * keys.length)];
+      p.items[k]++;
     }
   });
 }
@@ -88,7 +100,19 @@ io.on("connection", socket => {
 
     socket.playerIndex = gameState.players.length - 1;
 
-    if (gameState.shells.length === 0) newShells();
+    if (gameState.shells.length === 0) {
+      newShells();
+    } else {
+      const live = gameState.shells.filter(s => s === "live").length;
+      const blank = gameState.shells.length - live;
+
+      io.emit("playerMsg", {
+        type: "shells",
+        live,
+        blank
+      });
+    }
+
 
     io.emit("playerMsg", `${name} joined`);
     io.emit("state", gameState);
@@ -115,8 +139,8 @@ io.on("connection", socket => {
 
     gameState.isShooting = true;
 
-    if (!gameState.shells[gameState.shellIndex]) {
-      giveRoundItems();
+    // SAFETY: ensure shells exist
+    if (!gameState.shells.length) {
       newShells();
     }
 
@@ -133,12 +157,14 @@ io.on("connection", socket => {
     });
 
     setTimeout(() => {
+      // DAMAGE
       if (shell === "live") {
         const dmg = shooter.saw ? 2 : 1;
         victim.hp = Math.max(0, victim.hp - dmg);
         shooter.saw = false;
       }
 
+      // 🔥 TURN LOGIC
       const selfBlank =
         shell === "blank" && socket.playerIndex === target;
 
@@ -150,6 +176,13 @@ io.on("connection", socket => {
           gameState.players[gameState.turn].hp === 0 &&
           gameState.players.some(p => p.hp > 0)
         );
+      }
+
+      // ✅ HERE IS THE FIX
+      // If barrel is empty AFTER the shot → refill immediately
+      if (gameState.shellIndex >= gameState.shells.length) {
+        giveRoundItems();
+        newShells();
       }
 
       gameState.isShooting = false;
@@ -182,20 +215,37 @@ io.on("connection", socket => {
     }
 
     if (item === "saw") {
+      // Prevent double-arming
+      if (player.saw) {
+        socket.emit("playerMsg", {
+          type: "item",
+          msg: "🪚 Saw already armed"
+        });
+        return;
+      }
+
       player.saw = true;
+
       io.emit("playerMsg", {
         type: "item",
         msg: `🪚 ${player.name} armed the saw`
       });
     }
 
+
     if (item === "soda") {
+      const discarded = gameState.shells[gameState.shellIndex];
+
       gameState.shellIndex++;
+
       io.emit("playerMsg", {
         type: "item",
-        msg: "🥤 A shell was discarded"
+        msg: discarded === "live"
+          ? "🥤 A LIVE shell was discarded"
+          : "🥤 A BLANK shell was discarded"
       });
 
+      // If barrel emptied by soda
       if (gameState.shellIndex >= gameState.shells.length) {
         giveRoundItems();
         newShells();
