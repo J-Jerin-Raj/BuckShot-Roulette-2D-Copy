@@ -279,7 +279,20 @@ selfShootBtn.onclick = () => {
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
 
-  shoot(playerIndex);
+  // Random delay between 2–5 seconds
+  const delay = Math.floor(Math.random() * 3000) + 2000;
+
+  selfShootBtn.disabled = true;
+
+  setTimeout(() => {
+    // Re-check turn in case state changed
+    if (playerIndex === gameState.turn) {
+      shoot(playerIndex);
+    }
+
+    selfShootBtn.disabled = false;
+    info.textContent = "";
+  }, delay);
 };
 
 /* ---------- ITEMS ---------- */
