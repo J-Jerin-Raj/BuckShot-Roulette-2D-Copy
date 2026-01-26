@@ -4,8 +4,12 @@ const sounds = {
   soda: new Audio("sounds/soda.mp3"),
   saw: new Audio("sounds/saw.mp3"),
   mag: new Audio("sounds/mag.mp3"),
-  cigar: new Audio("sounds/cigar.mp3")
+  cigar: new Audio("sounds/cigar.mp3"),
+  heartbeat: new Audio("sounds/heartbeat.mp3")
 };
+
+sounds.heartbeat.loop = true;
+sounds.heartbeat.volume = 0.6;
 
 function isMobile() {
   return window.innerWidth <= 600;
@@ -93,6 +97,14 @@ socket.on("state", state => {
   updateTurn();
   checkWin();
   updateSawGlow();
+  // 🔇 Stop heartbeat if turn changes or shot resolved
+  if (selfShotTimeout && playerIndex !== gameState.turn) {
+    clearTimeout(selfShotTimeout);
+    selfShotTimeout = null;
+    sounds.heartbeat.pause();
+    sounds.heartbeat.currentTime = 0;
+    info.textContent = "";
+  }
 });
 
 socket.on("playerMsg", data => {
@@ -273,25 +285,34 @@ function shoot(target) {
 }
 
 //Self Shooting
+let selfShotTimeout = null;
+
 selfShootBtn.onclick = () => {
   if (playerIndex !== gameState.turn) return;
 
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
 
-  // Random delay between 2–5 seconds
-  const delay = Math.floor(Math.random() * 3000) + 2000;
+  const delay = Math.floor(Math.random() * 3000) + 2000; // 2–5 sec
 
   selfShootBtn.disabled = true;
+  info.textContent = "❤️ Your heart is pounding...";
 
-  setTimeout(() => {
-    // Re-check turn in case state changed
+  // ❤️ Start heartbeat
+  sounds.heartbeat.currentTime = 0;
+  sounds.heartbeat.play();
+
+  selfShotTimeout = setTimeout(() => {
+    sounds.heartbeat.pause();
+    sounds.heartbeat.currentTime = 0;
+
     if (playerIndex === gameState.turn) {
       shoot(playerIndex);
     }
 
     selfShootBtn.disabled = false;
     info.textContent = "";
+    selfShotTimeout = null;
   }, delay);
 };
 
