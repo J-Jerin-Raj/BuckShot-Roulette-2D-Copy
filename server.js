@@ -161,8 +161,10 @@ io.on("connection", socket => {
       if (shell === "live") {
         const dmg = shooter.saw ? 2 : 1;
         victim.hp = Math.max(0, victim.hp - dmg);
-        shooter.saw = false;
       }
+
+      // 🪚 ALWAYS clear saw after the shot
+      shooter.saw = false;
 
       // 🔥 TURN LOGIC
       const selfBlank =
@@ -258,6 +260,9 @@ io.on("connection", socket => {
   socket.on("disconnect", () => {
     const p = gameState.players[socket.playerIndex];
     if (!p) return;
+
+    // 🪚 Clear temporary effects
+    p.saw = false;
 
     gameState.players.splice(socket.playerIndex, 1);
 

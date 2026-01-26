@@ -37,6 +37,7 @@ const winnerText = document.getElementById("winnerText");
 
 const gun = document.getElementById("gun");
 const fireEffect = document.getElementById("fireEffect");
+const selfShootBtn = document.getElementById("selfShootBtn");
 
 /* ---------- CONSTANTS ---------- */
 
@@ -91,6 +92,7 @@ socket.on("state", state => {
   drawShells();
   updateTurn();
   checkWin();
+  updateSawGlow();
 });
 
 socket.on("playerMsg", data => {
@@ -249,6 +251,15 @@ function updateTurn() {
   pointGunAt(gameState.turn);
 }
 
+function updateSawGlow() {
+  if (playerIndex === null || !gameState) return;
+
+  const me = gameState.players[playerIndex];
+  if (!me) return;
+
+  gun.classList.toggle("saw-armed", !!me.saw);
+}
+
 /* ---------- ACTIONS ---------- */
 
 function shoot(target) {
@@ -260,6 +271,16 @@ function shoot(target) {
   // flashFire();
   socket.emit("shoot", target);
 }
+
+//Self Shooting
+selfShootBtn.onclick = () => {
+  if (playerIndex !== gameState.turn) return;
+
+  const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
+  if (!confirmShot) return;
+
+  shoot(playerIndex);
+};
 
 /* ---------- ITEMS ---------- */
 
