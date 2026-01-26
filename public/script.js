@@ -9,7 +9,7 @@ const sounds = {
 };
 
 sounds.heartbeat.loop = true;
-sounds.heartbeat.volume = 0.6;
+sounds.heartbeat.volume = 1;
 
 function isMobile() {
   return window.innerWidth <= 600;
@@ -293,7 +293,7 @@ selfShootBtn.onclick = () => {
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
 
-  const delay = Math.floor(Math.random() * 3000) + 2000; // 2–5 sec
+  const delay = Math.floor(Math.random() * 2000) + 1000; // 1–3 sec
 
   selfShootBtn.disabled = true;
   info.textContent = "❤️ Your heart is pounding...";
