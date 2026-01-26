@@ -109,7 +109,17 @@ socket.on("state", state => {
 
 socket.on("playerMsg", data => {
 
-  /* 🔴 NEW: Shell refill / game start reveal */
+  /* 🔊 Item sounds (GLOBAL) */
+  if (data.type === "itemSound") {
+    const sound = sounds[data.item];
+    if (sound) {
+      sound.currentTime = 0;
+      sound.play();
+    }
+    return;
+  }
+
+  /* 🔴 Shell refill / game start reveal */
   if (data.type === "shells") {
     info.textContent = `🔴 ${data.live} LIVE | ⚪ ${data.blank} BLANK`;
     setTimeout(() => {
@@ -118,7 +128,7 @@ socket.on("playerMsg", data => {
     return;
   }
 
-  /* 🎒 Item usage */
+  /* 🎒 Item usage text */
   if (data.type === "item") {
     info.textContent = data.msg;
     return;
@@ -133,17 +143,19 @@ socket.on("playerMsg", data => {
     return;
   }
 
-  /* 🔫 Shooting logic (KEEP THIS) */
+  /* 🔫 Shooting logic */
   if (data.type === "shoot") {
     info.textContent = `${data.from} aims at ${data.target}…`;
 
     setTimeout(() => {
       if (data.shell === "live") {
+        sounds.live.currentTime = 0;
         sounds.live.play();
         flashFire();
         recoilGun();
         info.textContent = "💥 LIVE SHELL!";
       } else {
+        sounds.blank.currentTime = 0;
         sounds.blank.play();
         info.textContent = data.self
           ? "😌 BLANK — you keep your turn"
@@ -264,12 +276,12 @@ function updateTurn() {
 }
 
 function updateSawGlow() {
-  if (playerIndex === null || !gameState) return;
+  if (!gameState) return;
 
-  const me = gameState.players[playerIndex];
-  if (!me) return;
+  const currentPlayer = gameState.players[gameState.turn];
+  if (!currentPlayer) return;
 
-  gun.classList.toggle("saw-armed", !!me.saw);
+  gun.classList.toggle("saw-armed", !!currentPlayer.saw);
 }
 
 /* ---------- ACTIONS ---------- */
