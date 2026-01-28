@@ -51,10 +51,17 @@ const RADIUS = 180;
 const MAX_ITEMS = 6;
 const SHELL_REVEAL_TIME = 10000;
 
-/* ---------- JOIN ---------- */
+/* ---------- JOIN AND END ---------- */
 
 const joinBtn = document.getElementById("joinBtn");
 const nameInput = document.getElementById("nameInput");
+
+document.getElementById("restartBtn").onclick = () => {
+  socket.emit("restartGame");
+};
+socket.on("forceReload", () => {
+  location.reload();
+});
 
 joinBtn.onclick = () => {
   const name = nameInput.value.trim();
@@ -87,8 +94,9 @@ socket.on("state", state => {
     if (me) playerIndex = state.players.indexOf(me);
   }
 
-  startMenu.style.display = state.players.length < 2 ? "flex" : "none";
-  gameUI.style.display = state.players.length < 2 ? "none" : "block";
+  const meExists = state.players.some(p => p.id === socket.id);
+  startMenu.style.display = meExists ? "none" : "flex";
+  gameUI.style.display = meExists ? "block" : "none";
 
   setupPositions();
   drawPlayers();

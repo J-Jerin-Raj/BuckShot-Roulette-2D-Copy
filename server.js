@@ -281,6 +281,18 @@ io.on("connection", socket => {
 
     io.emit("state", gameState);
   });
+
+  socket.on("restartGame", () => {
+    gameState = {
+      players: [],
+      turn: 0,
+      shells: [],
+      shellIndex: 0,
+      isShooting: false
+    };
+
+    io.emit("forceReload");
+  });
 });
 
 // server.listen(3000, () =>
