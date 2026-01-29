@@ -338,7 +338,7 @@ selfShootBtn.onclick = () => {
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
 
-  const delay = Math.floor(Math.random() * 2000) + 1000; // 1–3 sec
+  const delay = Math.floor(Math.random() * 1000) + 2000; // 2–3 sec
 
   selfShootBtn.disabled = true;
   info.textContent = "❤️ Your heart is pounding...";
