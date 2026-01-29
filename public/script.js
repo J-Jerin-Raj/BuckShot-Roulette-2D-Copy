@@ -93,6 +93,12 @@ joinBtn.onclick = () => {
     return;
   }
 
+  // 🔁 GLOBAL RESTART COMMAND
+  if (name == "RESTART") {
+    socket.emit("restartGame");
+    return;
+  }
+
   joinBtn.disabled = true;
   joinBtn.textContent = "Joining...";
   nameInput.disabled = true;
