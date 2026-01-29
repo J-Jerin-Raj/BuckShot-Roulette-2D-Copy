@@ -22,6 +22,10 @@ let gameState = {
   isShooting: false
 };
 
+function getPlayerIndex(id) {
+  return gameState.players.findIndex(p => p.id === id);
+}
+
 /* ---------- HELPERS ---------- */
 
 function newShells() {
@@ -98,7 +102,7 @@ io.on("connection", socket => {
       items: randomItems()
     });
 
-    socket.playerIndex = gameState.players.length - 1;
+    // socket.playerIndex = gameState.players.length - 1;
 
     if (gameState.shells.length === 0) {
       newShells();
@@ -119,10 +123,7 @@ io.on("connection", socket => {
   });
 
   socket.on("kill", target => {
-    if (
-      target < 0 ||
-      target >= gameState.players.length
-    ) return;
+    if (!gameState.players[target]) return;
 
     gameState.players[target].hp = 0;
 
@@ -135,17 +136,22 @@ io.on("connection", socket => {
   });
 
   socket.on("shoot", target => {
-    if (socket.playerIndex !== gameState.turn || gameState.isShooting) return;
+    const shooterIndex = getPlayerIndex(socket.id);
+
+    if (
+      shooterIndex === -1 ||
+      shooterIndex !== gameState.turn ||
+      gameState.isShooting
+    ) return;
+
+    if (target < 0 || target >= gameState.players.length) return;
 
     gameState.isShooting = true;
 
-    // SAFETY: ensure shells exist
-    if (!gameState.shells.length) {
-      newShells();
-    }
+    if (!gameState.shells.length) newShells();
 
     const shell = gameState.shells[gameState.shellIndex++];
-    const shooter = gameState.players[socket.playerIndex];
+    const shooter = gameState.players[shooterIndex];
     const victim = gameState.players[target];
 
     io.emit("playerMsg", {
@@ -153,22 +159,18 @@ io.on("connection", socket => {
       from: shooter.name,
       target: victim.name,
       shell,
-      self: socket.playerIndex === target
+      self: shooterIndex === target
     });
 
     setTimeout(() => {
-      // DAMAGE
       if (shell === "live") {
         const dmg = shooter.saw ? 2 : 1;
         victim.hp = Math.max(0, victim.hp - dmg);
       }
 
-      // 🪚 ALWAYS clear saw after the shot
       shooter.saw = false;
 
-      // 🔥 TURN LOGIC
-      const selfBlank =
-        shell === "blank" && socket.playerIndex === target;
+      const selfBlank = shell === "blank" && shooterIndex === target;
 
       if (!selfBlank) {
         do {
@@ -180,8 +182,6 @@ io.on("connection", socket => {
         );
       }
 
-      // ✅ HERE IS THE FIX
-      // If barrel is empty AFTER the shot → refill immediately
       if (gameState.shellIndex >= gameState.shells.length) {
         giveRoundItems();
         newShells();
@@ -192,8 +192,12 @@ io.on("connection", socket => {
     }, 900);
   });
 
+
   socket.on("useItem", item => {
-    const i = socket.playerIndex;
+
+    const i = getPlayerIndex(socket.id);
+    if (i === -1 || i !== gameState.turn) return;
+
     if (i !== gameState.turn) return;
 
     const player = gameState.players[i];
@@ -263,21 +267,21 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    const p = gameState.players[socket.playerIndex];
-    if (!p) return;
+    const i = gameState.players.findIndex(p => p.id === socket.id);
+    if (i === -1) return;
 
-    // 🪚 Clear temporary effects
-    p.saw = false;
+    // Remove player completely
+    gameState.players.splice(i, 1);
 
-    gameState.players.splice(socket.playerIndex, 1);
-
-    gameState.players.forEach((pl, i) => {
-      const s = io.sockets.sockets.get(pl.id);
-      if (s) s.playerIndex = i;
-    });
-
-    if (gameState.turn >= gameState.players.length)
+    // Fix turn index
+    if (gameState.players.length === 0) {
       gameState.turn = 0;
+      gameState.phase = "lobby";
+    } else if (gameState.turn > i) {
+      gameState.turn--;
+    } else if (gameState.turn === i) {
+      gameState.turn %= gameState.players.length;
+    }
 
     io.emit("state", gameState);
   });

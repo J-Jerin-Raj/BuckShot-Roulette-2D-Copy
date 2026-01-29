@@ -28,6 +28,10 @@ let gameState = null;
 let positions = [];
 let reveal = false;
 let killMode = false;
+function getMyIndex() {
+  if (!gameState) return -1;
+  return gameState.players.findIndex(p => p.id === socket.id);
+}
 
 /* ---------- DOM ---------- */
 
@@ -89,14 +93,16 @@ socket.on("disconnect", () => {
 socket.on("state", state => {
   gameState = state;
 
+  const meExists = state.players.some(p => p.id === socket.id);
+  if (!meExists) return;
+
   if (playerIndex === null) {
     const me = state.players.find(p => p.id === socket.id);
     if (me) playerIndex = state.players.indexOf(me);
   }
 
-  const meExists = state.players.some(p => p.id === socket.id);
-  startMenu.style.display = meExists ? "none" : "flex";
-  gameUI.style.display = meExists ? "block" : "none";
+  startMenu.style.display = "none";
+  gameUI.style.display = "block";
 
   setupPositions();
   drawPlayers();
@@ -105,8 +111,9 @@ socket.on("state", state => {
   updateTurn();
   checkWin();
   updateSawGlow();
+
   // 🔇 Stop heartbeat if turn changes or shot resolved
-  if (selfShotTimeout && playerIndex !== gameState.turn) {
+  if (selfShotTimeout && getMyIndex() !== gameState.turn) {
     clearTimeout(selfShotTimeout);
     selfShotTimeout = null;
     sounds.heartbeat.pause();
@@ -269,7 +276,7 @@ function drawShells() {
 }
 
 function updateTurn() {
-  const myTurn = playerIndex === gameState.turn;
+  const myTurn = getMyIndex() === gameState.turn;
 
   turnText.textContent = myTurn
     ? "Your turn — click a player"
@@ -295,7 +302,7 @@ function updateSawGlow() {
 /* ---------- ACTIONS ---------- */
 
 function shoot(target) {
-  if (playerIndex !== gameState.turn) {
+  if (getMyIndex() !== gameState.turn) {
     info.textContent = "Not your turn!";
     return;
   }
@@ -308,7 +315,7 @@ function shoot(target) {
 let selfShotTimeout = null;
 
 selfShootBtn.onclick = () => {
-  if (playerIndex !== gameState.turn) return;
+  if (getMyIndex() !== gameState.turn) return;
 
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
@@ -326,8 +333,9 @@ selfShootBtn.onclick = () => {
     sounds.heartbeat.pause();
     sounds.heartbeat.currentTime = 0;
 
-    if (playerIndex === gameState.turn) {
-      shoot(playerIndex);
+    const me = getMyIndex();
+    if (me === gameState.turn) {
+      shoot(me);
     }
 
     selfShootBtn.disabled = false;
@@ -361,10 +369,13 @@ document.getElementById("sodaBtn").onclick = () => {
 
 //Item Rendering
 function drawItems() {
-  if (playerIndex === null) return;
+  if (!gameState || !gameState.players) return;
 
-  const me = gameState.players[playerIndex];
-  const myTurn = playerIndex === gameState.turn;
+  const meIndex = gameState.players.findIndex(p => p.id === socket.id);
+  if (meIndex === -1) return;
+
+  const me = gameState.players[meIndex];
+  const myTurn = meIndex === gameState.turn;
 
   updateItem("mag", me.items.mag, myTurn);
   updateItem("cigar", me.items.cigar, myTurn);
