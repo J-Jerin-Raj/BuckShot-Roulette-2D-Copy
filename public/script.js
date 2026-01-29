@@ -11,6 +11,23 @@ const sounds = {
 sounds.heartbeat.loop = true;
 sounds.heartbeat.volume = 1;
 
+let audioUnlocked = false;
+document.body.addEventListener("click", unlockAudio, { once: true });
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+
+  Object.values(sounds).forEach(sound => {
+    sound.volume = sound.volume ?? 1;
+    sound.play().then(() => {
+      sound.pause();
+      sound.currentTime = 0;
+    }).catch(() => { });
+  });
+
+  console.log("🔊 Audio unlocked");
+}
+
 function isMobile() {
   return window.innerWidth <= 600;
 }
@@ -68,13 +85,14 @@ socket.on("forceReload", () => {
 });
 
 joinBtn.onclick = () => {
+  unlockAudio();   // ✅ add this line
+
   const name = nameInput.value.trim();
   if (!name) {
     alert("Enter name");
     return;
   }
 
-  // 🔒 Prevent double join
   joinBtn.disabled = true;
   joinBtn.textContent = "Joining...";
   nameInput.disabled = true;
