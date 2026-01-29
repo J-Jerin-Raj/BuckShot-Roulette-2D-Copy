@@ -294,11 +294,14 @@ function drawShells() {
 }
 
 function updateTurn() {
-  const myTurn = getMyIndex() === gameState.turn;
+  if (!gameState.players[gameState.turn]) return; // safety
+
+  const myTurn = playerIndex === gameState.turn;
+  const currentPlayer = gameState.players[gameState.turn];
 
   turnText.textContent = myTurn
     ? "Your turn — click a player"
-    : `Player ${gameState.turn + 1}'s Turn`;
+    : `${currentPlayer.name}'s Turn`;
 
   document.querySelectorAll(".player").forEach(el => {
     el.style.cursor = myTurn ? "crosshair" : "default";
