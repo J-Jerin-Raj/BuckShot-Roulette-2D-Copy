@@ -13,19 +13,23 @@ sounds.heartbeat.volume = 1;
 
 let audioUnlocked = false;
 document.body.addEventListener("click", unlockAudio, { once: true });
+
 function unlockAudio() {
   if (audioUnlocked) return;
   audioUnlocked = true;
 
   Object.values(sounds).forEach(sound => {
-    sound.volume = sound.volume ?? 1;
+    const prevVolume = sound.volume;
+    sound.volume = 0; // silent unlock
+
     sound.play().then(() => {
       sound.pause();
       sound.currentTime = 0;
-    }).catch(() => { });
+      sound.volume = prevVolume; // restore
+    }).catch(() => {});
   });
 
-  console.log("🔊 Audio unlocked");
+  console.log("🔊 Audio unlocked silently");
 }
 
 function isMobile() {
