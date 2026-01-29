@@ -318,6 +318,9 @@ function updateTurn() {
     el.style.outline = myTurn ? "1px solid #444" : "none";
   });
 
+  //Disable Self Shooting Button when it's not their Turn
+  selfShootBtn.disabled = !myTurn;
+
   pointGunAt(gameState.turn);
 }
 
@@ -346,7 +349,12 @@ function shoot(target) {
 let selfShotTimeout = null;
 
 selfShootBtn.onclick = () => {
-  if (getMyIndex() !== gameState.turn) return;
+  
+  // if (getMyIndex() !== gameState.turn){
+  //   selfShootBtn.disabled = true;
+  //   return;
+  // }
+  // selfShootBtn.disabled = false;
 
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
