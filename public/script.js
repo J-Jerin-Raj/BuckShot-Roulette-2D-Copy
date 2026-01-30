@@ -26,7 +26,7 @@ function unlockAudio() {
       sound.pause();
       sound.currentTime = 0;
       sound.volume = prevVolume; // restore
-    }).catch(() => {});
+    }).catch(() => { });
   });
 
   console.log("🔊 Audio unlocked silently");
@@ -48,9 +48,25 @@ let gameState = null;
 let positions = [];
 let reveal = false;
 let killMode = false;
+
 function getMyIndex() {
   if (!gameState) return -1;
   return gameState.players.findIndex(p => p.id === socket.id);
+}
+
+const roundPopup = document.getElementById("roundPopup");
+
+function showRoundPopup(text) {
+  roundPopup.textContent = text;
+  roundPopup.style.display = "block";
+  roundPopup.style.opacity = 1;
+
+  setTimeout(() => {
+    roundPopup.style.opacity = 0;
+    setTimeout(() => {
+      roundPopup.style.display = "none";
+    }, 500);
+  }, SHELL_REVEAL_TIME);
 }
 
 /* ---------- DOM ---------- */
@@ -73,7 +89,7 @@ const CENTER = { x: 225, y: 225 };
 const RADIUS = 180;
 //Items
 const MAX_ITEMS = 6;
-const SHELL_REVEAL_TIME = 10000;
+const SHELL_REVEAL_TIME = 8000;
 
 /* ---------- JOIN AND END ---------- */
 
@@ -121,7 +137,7 @@ socket.on("state", state => {
   gameState = state;
 
   if (getMyIndex() === -1) return;
-  
+
   const meExists = state.players.some(p => p.id === socket.id);
   if (!meExists) return;
 
@@ -160,10 +176,7 @@ socket.on("playerMsg", data => {
 
   /* 🔴 Shell refill / game start reveal */
   if (data.type === "shells") {
-    info.textContent = `🔴 ${data.live} LIVE | 🟢 ${data.blank} BLANK`;
-    setTimeout(() => {
-      info.textContent = "";
-    }, SHELL_REVEAL_TIME);
+    showRoundPopup(`🔴 ${data.live} LIVE  |  ⚪ ${data.blank} BLANK`);
     return;
   }
 
@@ -345,7 +358,7 @@ function shoot(target) {
 let selfShotTimeout = null;
 
 selfShootBtn.onclick = () => {
-  
+
   if (getMyIndex() !== gameState.turn) return;
 
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");

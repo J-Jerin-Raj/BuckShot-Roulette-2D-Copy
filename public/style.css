@@ -129,7 +129,7 @@ button:hover { background:#444; }
 
 .popup {
   position: fixed;
-  top: 20px;
+  top: 40%;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0,0,0,0.8);
@@ -291,4 +291,9 @@ body.mobile #turnText {
 .gun.saw-armed {
   filter: drop-shadow(0 0 14px darkred)
           drop-shadow(0 0 30px red);
+}
+
+#roundPopup {
+  font-size: 24px;
+  letter-spacing: 2px;
 }
