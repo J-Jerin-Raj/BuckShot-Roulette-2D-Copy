@@ -160,7 +160,7 @@ socket.on("playerMsg", data => {
 
   /* 🔴 Shell refill / game start reveal */
   if (data.type === "shells") {
-    info.textContent = `🔴 ${data.live} LIVE | ⚪ ${data.blank} BLANK`;
+    info.textContent = `🔴 ${data.live} LIVE | 🟢 ${data.blank} BLANK`;
     setTimeout(() => {
       info.textContent = "";
     }, SHELL_REVEAL_TIME);
