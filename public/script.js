@@ -44,7 +44,6 @@ const socket = io();
 
 /* ---------- STATE ---------- */
 
-let playerIndex = null;
 let gameState = null;
 let positions = [];
 let reveal = false;
@@ -121,13 +120,10 @@ socket.on("disconnect", () => {
 socket.on("state", state => {
   gameState = state;
 
+  if (getMyIndex() === -1) return;
+  
   const meExists = state.players.some(p => p.id === socket.id);
   if (!meExists) return;
-
-  if (playerIndex === null) {
-    const me = state.players.find(p => p.id === socket.id);
-    if (me) playerIndex = state.players.indexOf(me);
-  }
 
   startMenu.style.display = "none";
   gameUI.style.display = "block";
@@ -304,9 +300,10 @@ function drawShells() {
 }
 
 function updateTurn() {
-  if (!gameState.players[gameState.turn]) return; // safety
+  if (!gameState.players[gameState.turn]) return;
 
-  const myTurn = playerIndex === gameState.turn;
+  const myIndex = getMyIndex();
+  const myTurn = myIndex === gameState.turn;
   const currentPlayer = gameState.players[gameState.turn];
 
   turnText.textContent = myTurn
@@ -318,7 +315,6 @@ function updateTurn() {
     el.style.outline = myTurn ? "1px solid #444" : "none";
   });
 
-  //Disable Self Shooting Button when it's not their Turn
   selfShootBtn.disabled = !myTurn;
 
   pointGunAt(gameState.turn);
@@ -350,11 +346,7 @@ let selfShotTimeout = null;
 
 selfShootBtn.onclick = () => {
   
-  // if (getMyIndex() !== gameState.turn){
-  //   selfShootBtn.disabled = true;
-  //   return;
-  // }
-  // selfShootBtn.disabled = false;
+  if (getMyIndex() !== gameState.turn) return;
 
   const confirmShot = confirm("⚠️ Are you sure you want to shoot yourself?");
   if (!confirmShot) return;
